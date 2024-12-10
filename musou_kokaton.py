@@ -258,6 +258,12 @@ class Enemy(pg.sprite.Sprite):
             self.vy = 0
             self.state = "stop"
         self.rect.move_ip(self.vx, self.vy)
+    def inactivate(self):
+        """
+        敵機を無効化する
+        """
+        self.interval = float("inf")
+        self.image = pg.transform.laplacian(self.image)
 
 
 class Score:
@@ -277,6 +283,37 @@ class Score:
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)    
+
+class EMP(pg.sprite.Sprite):
+    """
+    電磁パルス(EMP)に関するクラス
+    """
+    def __init__(self,emys:"pg.sprite.Group",bombs:"pg.sprite.Group",screen:pg.Surface):
+        """
+        EMPを生成する
+        引数1 emys: 敵機グループ
+        引数2 bombs: 爆弾グループ
+        引数3 screen: 画面Surface
+        """
+        super().__init__()
+        self.image = pg.Surface(((WIDTH,HEIGHT)))
+        pg.draw.rect(self.image,(255,255,0),(0,0,WIDTH,HEIGHT)) #黄色で塗りつぶし
+        self.image.set_alpha(100)  #半透明にする
+        self.rect = self.image.get_rect()
+        self.life =2  #接続時間(0.05秒 * 50fps = 2.5フレーム　＝　2フレーム)
+
+        for emy in emys:
+            emy.inactivate()  #敵機無効化
+        for bomb in bombs:
+            bomb.speed /= 2
+            bomb.state = "inactive"  # 爆弾無効化
+
+        screen.blit(self.image, self.rect)  # EMPエフェクト表示
+        pg.display.update()
+        time.sleep(0.05)  # 0.05秒ウェイト
+
+
+
 
 
 class Gravity(pg.sprite.Sprite):
@@ -356,6 +393,7 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
+    emps = pg.sprite.Group()  # EMPグループを追加
     gravities = pg.sprite.Group()
     bird = Bird(3, (900, 400))
     bombs = pg.sprite.Group()
@@ -375,6 +413,9 @@ def main():
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
                     beams.add(Beam(bird))
+            if event.type == pg.KEYDOWN and event.key == pg.K_e and score.value >= 10:  # EMP発動
+                score.value -= 10
+                emps.add(EMP(emys, bombs, screen))
             if event.type == pg.KEYDOWN and event.key == pg.K_RETURN and score.value >= 2:
                 score.value -=2
                 gravities.add(Gravity(400))
@@ -445,6 +486,7 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        emps.update()  #EMPを更新
         gravities.update()
         gravities.draw(screen)
 
