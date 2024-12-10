@@ -102,7 +102,7 @@ class Bird(pg.sprite.Sprite):
             self.dire = tuple(sum_mv)
             self.image = self.imgs[self.dire]
 
-        if self.state == "hyper":  # 無敵状態の処理
+        if self.state == "hyper":  # 無敵状態の処理の追加
             self.hyper_life -= 1
             if self.hyper_life <= 0:
                 self.state = "normal"  # 無敵状態解除
