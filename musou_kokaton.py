@@ -249,6 +249,52 @@ class Score:
         screen.blit(self.image, self.rect)
 
 
+class Shield(pg.sprite.Sprite):
+    """
+    防御壁に関するクラス
+    """
+    def __init__(self, bird: Bird, life: int):
+        """
+        防御壁を生成する
+        引数1 bird: こうかとんインスタンス
+        引数2 life: 防御壁の持続時間（フレーム数）
+        """
+        super().__init__()
+        self.bird = bird # こうかとんインスタンスを保持
+        self.base_image = pg.Surface((20, bird.rect.height * 2)) # 回転前のSurfaceを保存
+        pg.draw.rect(self.base_image, (0, 0, 255), (0, 0, 20, bird.rect.height * 2))  # 青い矩形を描画
+
+        self.vx, self.vy = self.bird.dire # こうかとんの向きを取得
+        angle = math.degrees(math.atan2(-self.vy, self.vx)) # 角度を計算
+        self.image = pg.transform.rotate(self.base_image, angle) # base_imageを回転
+        self.rect = self.image.get_rect()
+        self.rect.centerx = self.bird.rect.centerx + self.bird.rect.width * self.vx
+        self.rect.centery = self.bird.rect.centery + self.bird.rect.height * self.vy
+
+        # self.update_position() # 初期位置設定
+        self.life = life
+
+    def update(self):
+        """
+        防御壁の持続時間を管理し、時間切れで消滅させる
+        """
+        # self.update_position() # こうかとんの位置に合わせて防御壁の位置を更新
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
+
+    # def update_position(self):  # 追従可能にする
+    #     """
+    #     こうかとんの位置と向きに合わせて防御壁の位置と角度を更新する
+    #     """
+    #     self.vx, self.vy = self.bird.dire # こうかとんの向きを取得
+    #     angle = math.degrees(math.atan2(-self.vy, self.vx)) # 角度を計算
+    #     self.image = pg.transform.rotate(self.base_image, angle) # base_imageを回転
+    #     self.rect = self.image.get_rect()
+    #     self.rect.centerx = self.bird.rect.centerx + self.bird.rect.width * self.vx
+    #     self.rect.centery = self.bird.rect.centery + self.bird.rect.height * self.vy
+
+
 def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -261,6 +307,8 @@ def main():
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
 
+    shields = pg.sprite.Group()  # Shieldグループを追加
+
     tmr = 0
     clock = pg.time.Clock()
     while True:
@@ -270,6 +318,12 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
+
+            # sキー押下時、スコアが50以上、防御壁が存在しない場合
+            if event.type == pg.KEYDOWN and event.key == pg.K_s and score.value >= 50 and len(shields) == 0:
+                score.value -= 50
+                shields.add(Shield(bird, 400))  # 防御壁を生成
+
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
@@ -296,6 +350,10 @@ def main():
             time.sleep(2)
             return
 
+        for bomb in pg.sprite.groupcollide(bombs, shields, True, False): # 爆弾と防御壁の衝突判定
+            exps.add(Explosion(bomb, 50)) # 爆発エフェクト
+            score.value += 1 # スコア加算
+
         bird.update(key_lst, screen)
         beams.update()
         beams.draw(screen)
@@ -306,6 +364,10 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+
+        shields.update() # 防御壁を更新
+        shields.draw(screen) # 防御壁を描画
+
         pg.display.update()
         tmr += 1
         clock.tick(50)
