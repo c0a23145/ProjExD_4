@@ -257,28 +257,35 @@ class Shield(pg.sprite.Sprite):
         self.base_image = pg.Surface((20, bird.rect.height * 2)) # 回転前のSurfaceを保存
         pg.draw.rect(self.base_image, (0, 0, 255), (0, 0, 20, bird.rect.height * 2))  # 青い矩形を描画
 
-        self.update_position() # 初期位置設定
-        self.life = life
-
-    def update(self):
-        """
-        防御壁の持続時間を管理し、時間切れで消滅させる
-        """
-        self.update_position() # こうかとんの位置に合わせて防御壁の位置を更新
-        self.life -= 1
-        if self.life < 0:
-            self.kill()
-
-    def update_position(self):
-        """
-        こうかとんの位置と向きに合わせて防御壁の位置と角度を更新する
-        """
         self.vx, self.vy = self.bird.dire # こうかとんの向きを取得
         angle = math.degrees(math.atan2(-self.vy, self.vx)) # 角度を計算
         self.image = pg.transform.rotate(self.base_image, angle) # base_imageを回転
         self.rect = self.image.get_rect()
         self.rect.centerx = self.bird.rect.centerx + self.bird.rect.width * self.vx
         self.rect.centery = self.bird.rect.centery + self.bird.rect.height * self.vy
+
+        # self.update_position() # 初期位置設定
+        self.life = life
+
+    def update(self):
+        """
+        防御壁の持続時間を管理し、時間切れで消滅させる
+        """
+        # self.update_position() # こうかとんの位置に合わせて防御壁の位置を更新
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
+
+    # def update_position(self):  # 追従可能にする
+    #     """
+    #     こうかとんの位置と向きに合わせて防御壁の位置と角度を更新する
+    #     """
+    #     self.vx, self.vy = self.bird.dire # こうかとんの向きを取得
+    #     angle = math.degrees(math.atan2(-self.vy, self.vx)) # 角度を計算
+    #     self.image = pg.transform.rotate(self.base_image, angle) # base_imageを回転
+    #     self.rect = self.image.get_rect()
+    #     self.rect.centerx = self.bird.rect.centerx + self.bird.rect.width * self.vx
+    #     self.rect.centery = self.bird.rect.centery + self.bird.rect.height * self.vy
 
 
 def main():
