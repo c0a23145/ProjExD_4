@@ -257,7 +257,33 @@ class Score:
 
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
-        screen.blit(self.image, self.rect)
+        screen.blit(self.image, self.rect)    
+
+
+class Gravity(pg.sprite.Sprite):
+    """
+    重力場に関するクラス
+    """
+    def __init__(self, life: int):
+        """
+        重力場を生成する
+        引数:life (発動時間:400フレーム)
+        """
+        super().__init__()
+        self.image = pg.Surface((WIDTH, HEIGHT))
+        pg.draw.rect(self.image, (0, 0, 0), (0, 0, WIDTH, HEIGHT))
+        self.image.set_alpha(100)
+        self.rect =  self.image.get_rect()
+        self.life = life
+
+    def update(self):
+        """
+        重力場の持続時間の管理
+        0未満になったらkillする
+        """
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
 
 
 class Shield(pg.sprite.Sprite):
@@ -311,7 +337,7 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
-
+    gravities = pg.sprite.Group()
     bird = Bird(3, (900, 400))
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
@@ -329,6 +355,9 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
+            if event.type == pg.KEYDOWN and event.key == pg.K_RETURN and score.value >= 2:
+                score.value -=2
+                gravities.add(Gravity(400))
 
             if key_lst[pg.K_RSHIFT] and bird.state == "normal" and score.value >= 100:
                 bird.state = "hyper"
@@ -339,6 +368,15 @@ def main():
             if event.type == pg.KEYDOWN and event.key == pg.K_s and score.value >= 50 and len(shields) == 0:
                 score.value -= 50
                 shields.add(Shield(bird, 400))  # 防御壁を生成
+            
+        for gravity in gravities:
+            for bomb in pg.sprite.spritecollide(gravity, bombs, True):
+                exps.add(Explosion(bomb, 50))
+                score.value += 1
+            for emy in pg.sprite.spritecollide(gravity, emys, True):
+                exps.add(Explosion(emy, 100))
+                score.value += 10
+                bird.change_img(6, screen)
 
         screen.blit(bg_img, [0, 0])
 
@@ -384,6 +422,8 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        gravities.update()
+        gravities.draw(screen)
 
         shields.update() # 防御壁を更新
         shields.draw(screen) # 防御壁を描画
