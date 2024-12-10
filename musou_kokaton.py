@@ -200,9 +200,20 @@ class NeoBeam:
         """
         指定されたビーム数のビームを生成し，リストで返す
         """
-        step = 50
-        angles = range(-50, 51, step)
-        return [Beam(self.bird, angle) for angle in angles]
+        # step = 50
+        # angles = range(-50, 51, step)
+        # return [Beam(self.bird, angle) for angle in angles]
+        beams = []
+        if self.num > 1 :
+            step = 100 // (self.num -1)
+            for i in range(self.num):
+                angle = -50 + i * step
+                beams.append(Beam(self.bird, angle))
+        else:
+            beams.append(Beam(self.bird))
+
+        return beams
+
 
 class Explosion(pg.sprite.Sprite):
     """
@@ -284,6 +295,7 @@ class Score:
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)    
 
+
 class EMP(pg.sprite.Sprite):
     """
     電磁パルス(EMP)に関するクラス
@@ -311,9 +323,6 @@ class EMP(pg.sprite.Sprite):
         screen.blit(self.image, self.rect)  # EMPエフェクト表示
         pg.display.update()
         time.sleep(0.05)  # 0.05秒ウェイト
-
-
-
 
 
 class Gravity(pg.sprite.Sprite):
@@ -429,7 +438,13 @@ def main():
             if event.type == pg.KEYDOWN and event.key == pg.K_s and score.value >= 50 and len(shields) == 0:
                 score.value -= 50
                 shields.add(Shield(bird, 400))  # 防御壁を生成
-            
+
+            if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+                if key_lst[pg.K_LSHIFT]: # 左Shiftキーが押されている場合
+                    beams.add(NeoBeam(bird, 5).gen_beams()) # 5方向にビームを発射
+                else:
+                    beams.add(Beam(bird))
+                        
         for gravity in gravities:
             for bomb in pg.sprite.spritecollide(gravity, bombs, True):
                 exps.add(Explosion(bomb, 50))
@@ -439,9 +454,6 @@ def main():
                 score.value += 10
                 bird.change_img(6, screen)
 
-                if event.key == pg.K_LSHIFT & event.key == pg.K_SPACE:  # 弾幕発射の条件
-                    neo_beam = NeoBeam(bird, 3)  # ビーム数を指定（例：5発）
-                    beams.add(*neo_beam.gen_beams())
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
