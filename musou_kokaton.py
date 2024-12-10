@@ -249,7 +249,7 @@ class Gravity(pg.sprite.Sprite):
     def __init__(self, life: int):
         """
         重力場を生成する
-        引数:life(発動時間:400フレーム)
+        引数:life (発動時間:400フレーム)
         """
         super().__init__()
         self.image = pg.Surface((WIDTH, HEIGHT))
@@ -261,6 +261,7 @@ class Gravity(pg.sprite.Sprite):
     def update(self):
         """
         重力場の持続時間の管理
+        0未満になったらkillする
         """
         self.life -= 1
         if self.life < 0:
