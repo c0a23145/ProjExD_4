@@ -278,7 +278,6 @@ def main():
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
-
     tmr = 0
     clock = pg.time.Clock()
     while True:
